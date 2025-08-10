@@ -1,12 +1,12 @@
 // app/components/TeamLineup.tsx
 'use client';
 
-import { useState, useMemo } from 'react'; // useMemo es útil aquí
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import PlayerStatsTable from './PlayerStatsTable'; 
 import FullRosterModal from './FullRosterModal';
 import PitcherStatsTable from './PitcherStatsTable';
-import FullPitcherModal from './FullPitcherModal'; // Importamos el NUEVO modal
+import FullPitcherModal from './FullPitcherModal';
 
 interface RosterPlayer {
   person: { id: number; fullName: string };
@@ -18,22 +18,22 @@ interface Props {
   roster: RosterPlayer[];
 }
 
+// SIN CAMBIOS EN LAS POSICIONES
 const positions = {
-  P: { name: 'Pitcher', styles: 'top-[68%] left-1/2 -translate-x-1/2' },
-  C: { name: 'Catcher', styles: 'top-[83%] left-1/2 -translate-x-1/2' },
-  '1B': { name: 'Primera Base', styles: 'top-[60%] left-[65%]' },
-  '2B': { name: 'Segunda Base', styles: 'top-[48%] left-[58%]' },
-  '3B': { name: 'Tercera Base', styles: 'top-[60%] left-[35%] -translate-x-full' },
-  SS: { name: 'Shortstop', styles: 'top-[48%] left-[42%] -translate-x-full' },
-  LF: { name: 'Left Fielder', styles: 'top-[30%] left-[20%]' },
-  CF: { name: 'Center Fielder', styles: 'top-[20%] left-1/2 -translate-x-1/2' },
-  RF: { name: 'Right Fielder', styles: 'top-[30%] left-[80%] -translate-x-full' },
+  P: { name: 'Pitcher', styles: 'top-[80%] left-[45%] md:top-[68%] md:left-1/2 md:-translate-x-1/2' },
+  C: { name: 'Catcher', styles: 'top-[110%] left-[45%] md:top-[83%] md:left-1/2 md:-translate-x-1/2' },
+  '1B': { name: 'Primera Base', styles: 'top-[75%] left-[80%] md:top-[60%] md:left-[65%]' },
+  '2B': { name: 'Segunda Base', styles: 'top-[60%] left-[60%] md:top-[48%] md:left-[58%]' },
+  '3B': { name: 'Tercera Base', styles: 'top-[75%] left-[10%] md:top-[60%] md:left-[35%] md:-translate-x-full' },
+  SS: { name: 'Shortstop', styles: 'top-[60%] left-[27%] md:top-[48%] md:left-[42%] md:-translate-x-full' },
+  LF: { name: 'Left Fielder', styles: 'top-[45%] left-[10%] md:top-[30%] md:left-[20%]' },
+  CF: { name: 'Center Fielder', styles: 'top-[40%] left-[44%] md:top-[20%] md:left-1/2 md:-translate-x-1/2' },
+  RF: { name: 'Right Fielder', styles: 'top-[45%] left-[80%] md:top-[30%] md:left-[80%] md:-translate-x-full' },
 };
 
 export default function TeamLineup({ teamName, roster }: Props) {
   const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
   const [isRosterModalOpen, setIsRosterModalOpen] = useState(false);
-  // NUEVO ESTADO para el modal de pitchers
   const [isPitcherModalOpen, setIsPitcherModalOpen] = useState(false);
 
   const handlePositionClick = (pos: string) => {
@@ -44,7 +44,6 @@ export default function TeamLineup({ teamName, roster }: Props) {
     ? roster.filter((p) => p.position.abbreviation === selectedPosition)
     : [];
 
-  // NUEVA LÓGICA: Pre-filtramos la lista de pitchers una sola vez
   const pitchers = useMemo(
       () => roster.filter(p => p.position.abbreviation === 'P'), 
       [roster]
@@ -54,29 +53,35 @@ export default function TeamLineup({ teamName, roster }: Props) {
     <div className="w-full min-h-screen relative">
       <Image src="/fondo.png" alt="Estadio de Béisbol" layout="fill" objectFit="cover" className="-z-10 brightness-50" />
 
-      {/* Contenedor para los botones */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-2">
-        <button
-          onClick={() => setIsRosterModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
-        >
-          Ver Equipo Completo
-        </button>
-        {/* NUEVO BOTÓN con su onClick */}
-        <button
-          onClick={() => setIsPitcherModalOpen(true)}
-          className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition"
-        >
-          Ver todos los Pitchers
-        </button>
-      </div>
-
+      {/* El contenedor principal ahora maneja los botones */}
       <div className="relative z-10 container mx-auto p-4 text-white">
+        
         <h1 className="text-4xl md:text-6xl font-bold text-center mb-2 drop-shadow-lg">{teamName}</h1>
-        <h2 className="text-2xl md:text-3xl text-center mb-8 drop-shadow-lg">Alineación en el Campo</h2>
+        <h2 className="text-2xl md:text-3xl text-center mb-4 md:mb-8 drop-shadow-lg">Alineación en el Campo</h2>
+
+        {/* --- INICIO DEL CAMBIO --- */}
+        {/*
+          Este contenedor ahora maneja los botones.
+          - Móvil (por defecto): Es un flex container centrado, con espacio entre botones y margen inferior.
+          - Desktop (md:): Vuelve a ser `absolute` en la esquina superior derecha y con diseño de columna.
+        */}
+        <div className="z-20 flex flex-row flex-wrap justify-center gap-4 mb-8 md:absolute md:top-4 md:right-4 md:flex-col md:space-y-2 md:gap-0 md:mb-0">
+          <button
+            onClick={() => setIsRosterModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
+          >
+            Ver Equipo Completo
+          </button>
+          <button
+            onClick={() => setIsPitcherModalOpen(true)}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition"
+          >
+            Ver todos los Pitchers
+          </button>
+        </div>
+        {/* --- FIN DEL CAMBIO --- */}
 
         <div className="max-w-4xl mx-auto aspect-video relative mb-8">
-          {/* ... (código de los círculos de posición sin cambios) ... */}
            {Object.entries(positions).map(([abbr, { styles }]) => (
             <div
               key={abbr}
@@ -96,7 +101,6 @@ export default function TeamLineup({ teamName, roster }: Props) {
 
         {selectedPosition && (
           <div className="mt-8 animate-fade-in">
-            {/* Si la posición seleccionada es 'P', mostramos la tabla de pitchers, si no, la de bateadores */}
             {selectedPosition === 'P' ? (
                  <PitcherStatsTable
                     tableTitle={`Jugadores de ${positions[selectedPosition as keyof typeof positions].name}`}
@@ -112,14 +116,12 @@ export default function TeamLineup({ teamName, roster }: Props) {
         )}
       </div>
 
-      {/* Renderizamos ambos modales (solo uno será visible a la vez) */}
       <FullRosterModal
         isOpen={isRosterModalOpen}
         onClose={() => setIsRosterModalOpen(false)}
         roster={roster}
         teamName={teamName}
       />
-      {/* NUEVO MODAL RENDERIZADO, le pasamos la lista filtrada de pitchers */}
       <FullPitcherModal
         isOpen={isPitcherModalOpen}
         onClose={() => setIsPitcherModalOpen(false)}
