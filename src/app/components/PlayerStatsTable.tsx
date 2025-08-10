@@ -1,18 +1,20 @@
 // app/components/PlayerStatsTable.tsx
 'use client';
 
-import { useState, useEffect, useMemo } from 'react'; // Importamos useMemo para optimización
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 
-// --- DEFINICIÓN DE TIPOS (sin cambios) ---
+// --- DEFINICIÓN DE TIPOS (Modificada) ---
 interface PlayerProp {
     person: { id: number; fullName: string; };
     position: { abbreviation: string; };
 }
+// MODIFICADO: Se elimina rbi y se añaden slg y ops.
 interface PlayerStats {
     avg: string;
     hr: number;
-    rbi: number;
+    slg: string; 
+    ops: string; 
 }
 interface PlayerDetails {
     stats?: PlayerStats;
@@ -30,9 +32,7 @@ export default function PlayerStatsTable({ tableTitle, players }: Props) {
     const [playerDetailsMap, setPlayerDetailsMap] = useState<Map<number, PlayerDetails>>(new Map());
     const [isLoading, setIsLoading] = useState(true);
 
-    // La lógica de useEffect para obtener datos no cambia.
     useEffect(() => {
-        // ... (el código de fetch permanece exactamente igual)
         if (players.length === 0) {
             setIsLoading(false);
             return;
@@ -64,10 +64,12 @@ export default function PlayerStatsTable({ tableTitle, players }: Props) {
                     };
 
                     if (seasonStats) {
+                        // MODIFICADO: Capturamos slg y ops en lugar de rbi.
                         details.stats = {
                             avg: seasonStats.avg || '.000',
                             hr: seasonStats.homeRuns || 0,
-                            rbi: seasonStats.rbi || 0,
+                            slg: seasonStats.slg || '.000', // AÑADIDO: Se obtiene el Slugging Percentage
+                            ops: seasonStats.ops || '.000', // AÑADIDO: Se obtiene el On-base Plus Slugging
                         };
                     }
                     
@@ -86,25 +88,16 @@ export default function PlayerStatsTable({ tableTitle, players }: Props) {
         fetchPlayerStats();
     }, [players]);
 
-    // --- SOLUCIÓN: LÓGICA DE ORDENAMIENTO ---
-    // Usamos useMemo para que el ordenamiento solo se recalcule si 'players' o 'playerDetailsMap' cambian.
+    // La lógica de ordenamiento por AVG no se modifica, pero se podría cambiar a ordenar por OPS si se quisiera.
     const sortedPlayers = useMemo(() => {
-        // Creamos una copia para no mutar la prop original.
         return [...players].sort((a, b) => {
-            // Obtenemos los detalles de cada jugador desde nuestro mapa de estado.
             const detailsA = playerDetailsMap.get(a.person.id);
             const detailsB = playerDetailsMap.get(b.person.id);
-
-            // Obtenemos el AVG de cada uno, convirtiéndolo a número.
-            // Si un jugador no tiene AVG, le asignamos 0 para que vaya al final.
             const avgA = parseFloat(detailsA?.stats?.avg || '0');
             const avgB = parseFloat(detailsB?.stats?.avg || '0');
-
-            // Para ordenar de mayor a menor, restamos B - A.
-            // Si avgB es mayor, el resultado será positivo y 'b' se colocará antes que 'a'.
             return avgB - avgA;
         });
-    }, [players, playerDetailsMap]); // Dependencias de useMemo
+    }, [players, playerDetailsMap]);
 
 
     return (
@@ -112,6 +105,7 @@ export default function PlayerStatsTable({ tableTitle, players }: Props) {
             <h3 className="text-2xl font-bold mb-4">{tableTitle}</h3>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-white">
+                    {/* MODIFICADO: Se actualizan las cabeceras de la tabla */}
                     <thead className="text-xs uppercase bg-white/20">
                         <tr>
                             <th scope="col" className="px-2 py-3"></th>
@@ -120,11 +114,11 @@ export default function PlayerStatsTable({ tableTitle, players }: Props) {
                             <th scope="col" className="px-4 py-3 text-center">País</th>
                             <th scope="col" className="px-6 py-3 text-center">AVG</th>
                             <th scope="col" className="px-6 py-3 text-center">HR</th>
-                            <th scope="col" className="px-6 py-3 text-center">RBI</th>
+                            <th scope="col" className="px-6 py-3 text-center">SLG</th> {/* AÑADIDO */}
+                            <th scope="col" className="px-6 py-3 text-center">OPS</th> {/* CAMBIADO desde RBI */}
                         </tr>
                     </thead>
                     <tbody>
-                        {/* SOLUCIÓN FINAL: Mapeamos sobre la nueva lista ordenada */}
                         {sortedPlayers.map((player) => {
                             const details = playerDetailsMap.get(player.person.id);
                             return (
@@ -155,8 +149,13 @@ export default function PlayerStatsTable({ tableTitle, players }: Props) {
                                     <td className="px-6 py-4 text-center font-mono">
                                         {isLoading ? '...' : details?.stats?.hr ?? '--'}
                                     </td>
+                                    {/* AÑADIDO: Celda para mostrar SLG */}
                                     <td className="px-6 py-4 text-center font-mono">
-                                        {isLoading ? '...' : details?.stats?.rbi ?? '--'}
+                                        {isLoading ? '...' : details?.stats?.slg ?? '.---'}
+                                    </td>
+                                    {/* MODIFICADO: Celda ahora muestra OPS */}
+                                    <td className="px-6 py-4 text-center font-mono">
+                                        {isLoading ? '...' : details?.stats?.ops ?? '.---'}
                                     </td>
                                 </tr>
                             )
