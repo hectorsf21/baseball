@@ -39,3 +39,4 @@ export async function POST(request: Request) {
     return new NextResponse('Error creating section', { status: 500 });
   }
 }
+

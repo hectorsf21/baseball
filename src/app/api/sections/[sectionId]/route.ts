@@ -33,3 +33,35 @@ export async function GET(request: Request) {
     return new NextResponse('Error fetching section', { status: 500 });
   }
 }
+
+// PUT -> Actualizar el nombre de una sección específica
+export async function PUT(request: Request) {
+    try {
+        // Usamos el método manual que ya te funciona bien
+        const url = new URL(request.url);
+        const pathSegments = url.pathname.split('/');
+        const sectionId = pathSegments[pathSegments.length - 1];
+
+        const idAsNumber = parseInt(sectionId, 10);
+        if (isNaN(idAsNumber)) {
+            return new NextResponse('Invalid section ID', { status: 400 });
+        }
+
+        const body = await request.json();
+        const { name } = body;
+
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+            return new NextResponse('Name is required and must be a non-empty string', { status: 400 });
+        }
+
+        const updatedSection = await prisma.section.update({
+            where: { id: idAsNumber },
+            data: { name: name.trim() },
+        });
+
+        return NextResponse.json(updatedSection);
+    } catch (error) {
+        console.error('Error updating section:', error);
+        return new NextResponse('Error updating section', { status: 500 });
+    }
+}
