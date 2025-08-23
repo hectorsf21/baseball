@@ -65,3 +65,25 @@ export async function PUT(request: Request) {
         return new NextResponse('Error updating section', { status: 500 });
     }
 }
+// DELETE -> Eliminar una sección específica
+export async function DELETE(request: Request) {
+    try {
+        const url = new URL(request.url);
+        const pathSegments = url.pathname.split('/');
+        const sectionId = pathSegments[pathSegments.length - 1];
+
+        const idAsNumber = parseInt(sectionId, 10);
+        if (isNaN(idAsNumber)) {
+            return new NextResponse('Invalid section ID', { status: 400 });
+        }
+        
+        await prisma.section.delete({
+            where: { id: idAsNumber },
+        });
+
+        return new NextResponse(null, { status: 204 });
+    } catch (error) {
+        console.error('Error deleting section:', error);
+        return new NextResponse('Error deleting section', { status: 500 });
+    }
+}
