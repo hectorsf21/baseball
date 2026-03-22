@@ -1,0 +1,29 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para una Sección
+model Section {
+  id        Int          @id @default(autoincrement())
+  name      String
+  createdAt DateTime     @default(now())
+  players   PlayerNote[] // Una sección puede tener muchas notas de jugadores
+}
+
+// Modelo para un Jugador con sus Notas
+model PlayerNote {
+  id         Int    @id @default(autoincrement())
+  notes      String @db.Text // Usamos TEXT para notas largas
+  playerData Json   // Aquí guardaremos el objeto JSON del jugador de la API
+  
+  sectionId  Int
+  section    Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  // onDelete: Cascade significa que si borras una sección, se borran sus jugadores asociados.
+}

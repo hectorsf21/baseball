@@ -1,4 +1,3 @@
-// app/components/PitcherStatsTable.tsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -9,16 +8,20 @@ interface PlayerProp {
     person: { id: number; fullName: string; };
     position: { abbreviation: string; };
 }
-// Estadísticas clave de un pitcher
+// --- MODIFICADO: Añadimos más estadísticas para determinar el rol ---
 interface PitcherStats {
-    era: string; // Efectividad
+    era: string;
     wins: number;
     losses: number;
     strikeOuts: number;
+    gamesPitched: number;
+    gamesStarted: number;
 }
+// --- MODIFICADO: Añadimos el campo 'role' ---
 interface PlayerDetails {
     stats?: PitcherStats;
     birthCountry?: string;
+    role?: 'Abridor' | 'Relevista' | 'Híbrido';
 }
 interface Props {
     tableTitle: string;
@@ -44,7 +47,6 @@ export default function PitcherStatsTable({ tableTitle, players }: Props) {
             const currentSeason = new Date().getFullYear();
 
             const statsPromises = players.map(async (player) => {
-                // CAMBIO CLAVE: Usamos 'group=[pitching]' para obtener las estadísticas de pitcheo
                 const url = `https://statsapi.mlb.com/api/v1/people/${player.person.id}?hydrate=stats(group=[pitching],type=[season],season=${currentSeason})`;
                 try {
                     const response = await fetch(url);
@@ -55,7 +57,6 @@ export default function PitcherStatsTable({ tableTitle, players }: Props) {
                     if (!personData) return;
 
                     const birthCountry = personData.birthCountry || 'N/A';
-                    // Buscamos el grupo de estadísticas de 'pitching'
                     const pitchingStats = personData.stats?.find(
                         (statGroup: any) => statGroup.group.displayName === 'pitching'
                     );
@@ -65,13 +66,32 @@ export default function PitcherStatsTable({ tableTitle, players }: Props) {
                         birthCountry: birthCountry,
                     };
 
-                    // Guardamos las estadísticas de pitcheo si existen
                     if (seasonStats) {
+                        // --- NUEVO: Obtenemos juegos lanzados y juegos iniciados ---
+                        const gamesPitched = seasonStats.gamesPitched || 0;
+                        const gamesStarted = seasonStats.gamesStarted || 0;
+
+                        // --- NUEVO: Lógica para determinar el rol del pitcher ---
+                        let role: 'Abridor' | 'Relevista' | 'Híbrido' = 'Relevista';
+                        if (gamesStarted > 0) {
+                            // Si más de la mitad de sus apariciones son como abridor, es Abridor.
+                            if (gamesStarted >= gamesPitched / 2) {
+                                role = 'Abridor';
+                            } else {
+                                // Si tiene algunas aperturas pero mayormente releva, es Híbrido.
+                                role = 'Híbrido';
+                            }
+                        }
+                        
+                        details.role = role; // Guardamos el rol calculado
+                        
                         details.stats = {
                             era: seasonStats.era || '0.00',
                             wins: seasonStats.wins || 0,
                             losses: seasonStats.losses || 0,
                             strikeOuts: seasonStats.strikeOuts || 0,
+                            gamesPitched: gamesPitched,
+                            gamesStarted: gamesStarted,
                         };
                     }
                     
@@ -89,17 +109,12 @@ export default function PitcherStatsTable({ tableTitle, players }: Props) {
         fetchPitcherStats();
     }, [players]);
 
-    // ORDENAMIENTO: Por ERA (menor a mayor). Un ERA más bajo es mejor.
     const sortedPlayers = useMemo(() => {
         return [...players].sort((a, b) => {
             const detailsA = playerDetailsMap.get(a.person.id);
             const detailsB = playerDetailsMap.get(b.person.id);
-
-            // Asignamos un ERA muy alto a los que no tienen para que vayan al final
             const eraA = parseFloat(detailsA?.stats?.era || '99.99');
             const eraB = parseFloat(detailsB?.stats?.era || '99.99');
-
-            // Para ordenar de menor a mayor, restamos A - B.
             return eraA - eraB;
         });
     }, [players, playerDetailsMap]);
@@ -114,6 +129,8 @@ export default function PitcherStatsTable({ tableTitle, players }: Props) {
                             <th scope="col" className="px-2 py-3"></th>
                             <th scope="col" className="px-4 py-3">Pitcher</th>
                             <th scope="col" className="px-4 py-3 text-center">País</th>
+                            {/* --- NUEVO: Cabecera de la columna Rol --- */}
+                            <th scope="col" className="px-4 py-3 text-center">Rol</th>
                             <th scope="col" className="px-6 py-3 text-center">ERA</th>
                             <th scope="col" className="px-6 py-3 text-center">W</th>
                             <th scope="col" className="px-6 py-3 text-center">L</th>
@@ -132,6 +149,8 @@ export default function PitcherStatsTable({ tableTitle, players }: Props) {
                                     </td>
                                     <th scope="row" className="px-4 py-4 font-medium whitespace-nowrap">{player.person.fullName}</th>
                                     <td className="px-4 py-4 text-center">{isLoading ? '...' : details?.birthCountry ?? '--'}</td>
+                                    {/* --- NUEVO: Celda para mostrar el Rol --- */}
+                                    <td className="px-4 py-4 text-center">{isLoading ? '...' : details?.role ?? '--'}</td>
                                     <td className="px-6 py-4 text-center font-mono">{isLoading ? '...' : details?.stats?.era ?? '-.--'}</td>
                                     <td className="px-6 py-4 text-center font-mono">{isLoading ? '...' : details?.stats?.wins ?? '--'}</td>
                                     <td className="px-6 py-4 text-center font-mono">{isLoading ? '...' : details?.stats?.losses ?? '--'}</td>
