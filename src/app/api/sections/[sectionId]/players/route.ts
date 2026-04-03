@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const newPlayerNote = await prisma.playerNote.create({
       data: {
         sectionId: idAsNumber, 
-        playerData: body.playerData as unknown as Prisma.JsonObject,
+        playerData: body.playerData as any,
         notes: '', 
       },
     });
