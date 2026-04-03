@@ -74,6 +74,7 @@ export default function EstadisticasPage() {
   const [batters, setBatters] = useState<Batter[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'bateadores' | 'pitchers'>('bateadores');
+  const [filterPosition, setFilterPosition] = useState<string>('Todos');
 
   useEffect(() => {
     fetch('/api/teams')
@@ -145,17 +146,35 @@ export default function EstadisticasPage() {
             <div className="flex border-b border-gray-100 bg-gray-50/50">
               <button
                 className={`flex-1 py-4 text-sm font-medium transition-colors ${activeTab === 'bateadores' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-                onClick={() => setActiveTab('bateadores')}
+                onClick={() => { setActiveTab('bateadores'); setFilterPosition('Todos'); }}
               >
                 Bateadores
               </button>
               <button
                 className={`flex-1 py-4 text-sm font-medium transition-colors ${activeTab === 'pitchers' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-                onClick={() => setActiveTab('pitchers')}
+                onClick={() => { setActiveTab('pitchers'); setFilterPosition('Todos'); }}
               >
                 Pitchers
               </button>
             </div>
+
+            {/* Position Filters for Batters */}
+            {activeTab === 'bateadores' && batters.length > 0 && !loading && (
+              <div className="bg-white px-6 py-3 border-b border-gray-100">
+                <div className="flex flex-wrap gap-2 items-center text-sm">
+                  <span className="text-gray-500 mr-2 font-medium">Filtrar por posición:</span>
+                  {['Todos', ...Array.from(new Set(batters.map(b => b.position))).sort()].map((pos) => (
+                    <button
+                      key={pos}
+                      onClick={() => setFilterPosition(pos)}
+                      className={`px-3 py-1 rounded-full border text-xs font-semibold transition-colors ${filterPosition === pos ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+                    >
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Loading / Table */}
             <div className="p-0 overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]">
@@ -174,6 +193,7 @@ export default function EstadisticasPage() {
                       <tr>
                         <th className="px-6 py-4 font-semibold"></th>
                         <th className="px-6 py-4 font-semibold">Jugador</th>
+                        <th className="px-6 py-4 font-semibold text-center">Pos.</th>
                         <th className="px-6 py-4 font-semibold">Edad</th>
                         <th className="px-6 py-4 font-semibold text-center">Nacionalidad</th>
                         <th className="px-6 py-4 font-semibold text-right">AB</th>
@@ -200,8 +220,8 @@ export default function EstadisticasPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {activeTab === 'bateadores' ? (
-                      batters.length > 0 ? (
-                        batters.map((b) => (
+                      (filterPosition === 'Todos' ? batters : batters.filter(b => b.position === filterPosition)).length > 0 ? (
+                        (filterPosition === 'Todos' ? batters : batters.filter(b => b.position === filterPosition)).map((b) => (
                           <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-2">
                               <div className="w-10 h-10 relative">
@@ -209,6 +229,7 @@ export default function EstadisticasPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4 font-medium text-gray-900">{b.name}</td>
+                            <td className="px-6 py-4 text-center font-bold text-gray-700">{b.position}</td>
                             <td className="px-6 py-4 text-gray-500">{b.age}</td>
                             <td className="px-6 py-4 text-center tooltip" title={b.nationality}>
                               {getCountryFlagCode(b.nationality) === 'un' ? (
@@ -228,7 +249,7 @@ export default function EstadisticasPage() {
                           </tr>
                         ))
                       ) : (
-                        <tr><td colSpan={12} className="px-6 py-8 text-center text-gray-400">No hay datos disponibles para este equipo</td></tr>
+                        <tr><td colSpan={13} className="px-6 py-8 text-center text-gray-400">No hay datos disponibles para este filtro</td></tr>
                       )
                     ) : (
                       pitchers.length > 0 ? (

@@ -1,14 +1,17 @@
-async function test() {
-  const res = await fetch('https://statsapi.mlb.com/api/v1/teams/111/roster?hydrate=person(stats(type=season))');
+async function testSearch() {
+  const query = "Miguel Cabrera";
+  const url = `https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(query)}&sportIds=1`;
+  const res = await fetch(url);
   const data = await res.json();
-  // Get a pitcher
-  const pitcher = data.roster.find((item: any) => item.position.abbreviation === 'P');
-  const batter = data.roster.find((item: any) => item.position.abbreviation !== 'P');
   
-  console.log("Pitcher stats:");
-  console.log(JSON.stringify(pitcher.person.stats, null, 2));
-  console.log("Batter stats:");
-  console.log(JSON.stringify(batter.person.stats, null, 2));
+  if(data.people && data.people.length > 0) {
+    const p = data.people[0];
+    const statsUrl = `https://statsapi.mlb.com/api/v1/people/${p.id}?hydrate=stats(group=[hitting,pitching],type=season,season=2026)`;
+    const statsRes = await fetch(statsUrl);
+    const statsData = await statsRes.json();
+    console.log(JSON.stringify(statsData.people[0].stats, null, 2));
+  } else {
+    console.log("No people found");
+  }
 }
-
-test();
+testSearch();
