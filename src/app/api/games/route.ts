@@ -5,7 +5,10 @@ export async function GET() {
     // Usamos la fecha actual para obtener los juegos de hoy
     // En producción usaríamos new Date().toISOString().split('T')[0]
     // Para pruebas con datos reales de la temporada 2026 solicitada por el usuario:
-    const date = "2026-04-03"; 
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const date = `2026-${month}-${day}`; 
     
     const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=team,probablePitcher,leagueRecord&date=${date}`;
     const res = await fetch(url);
