@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import PlayerPerformanceChart from '@/app/components/PlayerPerformanceChart';
 
 interface SearchPlayer {
   id: number;
@@ -32,6 +33,7 @@ export default function BuscarJugadoresPage() {
   const [players, setPlayers] = useState<SearchPlayer[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [selectedPlayer, setSelectedPlayer] = useState<{ id: number, name: string, group: 'hitting' | 'pitching' } | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +150,7 @@ export default function BuscarJugadoresPage() {
                         <th className="px-6 py-4 font-semibold text-right">OBP</th>
                         <th className="px-6 py-4 font-semibold text-right">K</th>
                         <th className="px-6 py-4 font-semibold text-right">BB</th>
+                        <th className="px-6 py-4 font-semibold text-right">Análisis</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -183,6 +186,15 @@ export default function BuscarJugadoresPage() {
                           <td className="px-6 py-4 text-right text-gray-500">{b.obp}</td>
                           <td className="px-6 py-4 text-right text-gray-500">{b.strikeouts}</td>
                           <td className="px-6 py-4 text-right text-gray-500">{b.walks}</td>
+                          <td className="px-6 py-4 text-right">
+                            <button 
+                              onClick={() => setSelectedPlayer({ id: b.id, name: b.name, group: 'hitting' })}
+                              className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded-full transition-colors flex items-center gap-1 ml-auto font-bold text-xs"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+                              Gráfica
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -212,6 +224,7 @@ export default function BuscarJugadoresPage() {
                         <th className="px-6 py-4 font-semibold text-right">WHIP</th>
                         <th className="px-6 py-4 font-semibold text-right">K</th>
                         <th className="px-6 py-4 font-semibold text-right">BB</th>
+                        <th className="px-6 py-4 font-semibold text-right">Análisis</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -244,6 +257,15 @@ export default function BuscarJugadoresPage() {
                           <td className="px-6 py-4 text-right text-gray-500">{p.whip}</td>
                           <td className="px-6 py-4 text-right text-gray-500">{p.strikeouts}</td>
                           <td className="px-6 py-4 text-right text-gray-500">{p.walks}</td>
+                          <td className="px-6 py-4 text-right">
+                            <button 
+                              onClick={() => setSelectedPlayer({ id: p.id, name: p.name, group: 'pitching' })}
+                              className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded-full transition-colors flex items-center gap-1 ml-auto font-bold text-xs"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+                              Gráfica
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -252,6 +274,41 @@ export default function BuscarJugadoresPage() {
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* Modal de Gráfica */}
+      {selectedPlayer && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h2 className="text-xl font-black text-gray-900">{selectedPlayer.name}</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Análisis de Desempeño 2026</p>
+              </div>
+              <button 
+                onClick={() => setSelectedPlayer(null)}
+                className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-8">
+              <PlayerPerformanceChart 
+                playerId={selectedPlayer.id} 
+                playerName={selectedPlayer.name} 
+                group={selectedPlayer.group} 
+              />
+            </div>
+            <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-end">
+              <button 
+                onClick={() => setSelectedPlayer(null)}
+                className="px-6 py-2 bg-gray-900 text-white rounded-full text-sm font-bold hover:bg-gray-800 transition-colors"
+              >
+                Cerrar Análisis
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>
